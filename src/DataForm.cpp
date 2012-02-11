@@ -20,22 +20,12 @@ bool DataForm::Initialize() {
 result DataForm::OnInitializing(void) {
   result r = E_SUCCESS;
 
-  pAccelerationXValueLabel = static_cast<Label *> (GetControl(L"IDC_ACCEL_X_VAL_LABEL"));
-  pAccelerationYValueLabel = static_cast<Label *> (GetControl(L"IDC_ACCEL_Y_VAL_LABEL"));
-  pAccelerationZValueLabel = static_cast<Label *> (GetControl(L"IDC_ACCEL_Z_VAL_LABEL"));
-
-  pMagneticXValueLabel = static_cast<Label *> (GetControl(L"IDC_MAG_X_VAL_LABEL"));
-  pMagneticYValueLabel = static_cast<Label *> (GetControl(L"IDC_MAG_Y_VAL_LABEL"));
-  pMagneticZValueLabel = static_cast<Label *> (GetControl(L"IDC_MAG_Z_VAL_LABEL"));
-
-  pPitchValueLabel = static_cast<Label *> (GetControl(L"IDC_PITCH_VAL_LABEL"));
-  pRollValueLabel = static_cast<Label *> (GetControl(L"IDC_ROLL_VAL_LABEL"));
-  pAzimuthValueLabel = static_cast<Label *> (GetControl(L"IDC_AZIMUTH_VAL_LABEL"));
-
-  pProximityValueLabel = static_cast<Label *> (GetControl(L"IDC_PROX_VAL_LABEL"));
-
   /* Initialize the SensorManager */
-  sensorManager.Construct();
+  r = sensorManager.Construct();
+  if (IsFailed(r)) {
+    AppLog("Error: cannot construct the SensorManager: %s", GetErrorMessage(r));
+    return E_FAILURE;
+  }
 
   long minimumSensorInterval;
 
@@ -75,6 +65,20 @@ result DataForm::OnInitializing(void) {
 
   }
 
+  pAccelerationXValueLabel = static_cast<Label *> (GetControl(L"IDC_ACCEL_X_VAL_LABEL"));
+  pAccelerationYValueLabel = static_cast<Label *> (GetControl(L"IDC_ACCEL_Y_VAL_LABEL"));
+  pAccelerationZValueLabel = static_cast<Label *> (GetControl(L"IDC_ACCEL_Z_VAL_LABEL"));
+
+  pMagneticXValueLabel = static_cast<Label *> (GetControl(L"IDC_MAG_X_VAL_LABEL"));
+  pMagneticYValueLabel = static_cast<Label *> (GetControl(L"IDC_MAG_Y_VAL_LABEL"));
+  pMagneticZValueLabel = static_cast<Label *> (GetControl(L"IDC_MAG_Z_VAL_LABEL"));
+
+  pPitchValueLabel = static_cast<Label *> (GetControl(L"IDC_PITCH_VAL_LABEL"));
+  pRollValueLabel = static_cast<Label *> (GetControl(L"IDC_ROLL_VAL_LABEL"));
+  pAzimuthValueLabel = static_cast<Label *> (GetControl(L"IDC_AZIMUTH_VAL_LABEL"));
+
+  pProximityValueLabel = static_cast<Label *> (GetControl(L"IDC_PROX_VAL_LABEL"));
+
   return r;
 }
 
@@ -98,7 +102,7 @@ result DataForm::OnTerminating(void) {
 
 void DataForm::OnUserEventReceivedN(RequestId requestId, Osp::Base::Collection::IList * pArgs) {
 
-  /* Retrieve the arguments */
+  /* Retrieve the sensor type argument */
   Integer * sensorTypeArg = static_cast<Integer *> (pArgs->GetAt(0));
 
   switch (sensorTypeArg->ToInt()) {
@@ -110,15 +114,15 @@ void DataForm::OnUserEventReceivedN(RequestId requestId, Osp::Base::Collection::
 
       String xString;
       xString.Append(xVal->ToFloat());
-      xString.Append(" g");
+      xString.Append(L" g");
 
       String yString;
       yString.Append(yVal->ToFloat());
-      yString.Append(" g");
+      yString.Append(L" g");
 
       String zString;
       zString.Append(zVal->ToFloat());
-      zString.Append(" g");
+      zString.Append(L" g");
 
       pAccelerationXValueLabel->SetText(xString);
       pAccelerationYValueLabel->SetText(yString);
@@ -159,15 +163,15 @@ void DataForm::OnUserEventReceivedN(RequestId requestId, Osp::Base::Collection::
 
       String pitchString;
       pitchString.Append(pitchVal->ToFloat());
-      pitchString.Append(" °");
+      pitchString.Append(L" °");
 
       String rollString;
       rollString.Append(rollVal->ToFloat());
-      rollString.Append(" °");
+      rollString.Append(L" °");
 
       String azimuthString;
       azimuthString.Append(azimuthVal->ToFloat());
-      azimuthString.Append(" °");
+      azimuthString.Append(L" °");
 
       pPitchValueLabel->SetText(pitchString);
       pRollValueLabel->SetText(rollString);
@@ -186,10 +190,8 @@ void DataForm::OnUserEventReceivedN(RequestId requestId, Osp::Base::Collection::
 
     }
       break;
-    case SENSOR_TYPE_GPS: {
-      // Not used, but a warning is raised if this is missing
-    }
-      break;
+
+    default: break;
 
   }
 
@@ -197,27 +199,38 @@ void DataForm::OnUserEventReceivedN(RequestId requestId, Osp::Base::Collection::
   pArgs->RemoveAll(true);
   delete pArgs;
 
+  /* Redraw the whole form to update the labels */
   RequestRedraw(true);
 
 }
 
 void DataForm::OnDataReceived(SensorType sensorType, SensorData &sensorData, result r) {
 
+  if (IsFailed(r)) {
+    AppLog("OnDataReceived() Error: %s", GetErrorMessage(r));
+    return;
+  }
+
+  // Create the arguments list that will be sent via SendUserEvent()
   ArrayList * args = new ArrayList();
+  // The first element in the list is the sensor type
   args->Add(*new Integer(sensorType));
 
   switch (sensorType) {
     case SENSOR_TYPE_ACCELERATION: {
       float x, y, z;
 
+      // Read the sensor data
       sensorData.GetValue((SensorDataKey) ACCELERATION_DATA_KEY_X, x);
       sensorData.GetValue((SensorDataKey) ACCELERATION_DATA_KEY_Y, y);
       sensorData.GetValue((SensorDataKey) ACCELERATION_DATA_KEY_Z, z);
 
+      // Convert to Float objects to insert inside the arguments list
       Float * accelerationX = new Float(x);
       Float * accelerationY = new Float(y);
       Float * accelerationZ = new Float(z);
 
+      // Add the sensor data values inside the arguments list
       args->Add(*accelerationX);
       args->Add(*accelerationY);
       args->Add(*accelerationZ);
@@ -232,13 +245,13 @@ void DataForm::OnDataReceived(SensorType sensorType, SensorData &sensorData, res
       sensorData.GetValue((SensorDataKey) MAGNETIC_DATA_KEY_Y, y);
       sensorData.GetValue((SensorDataKey) MAGNETIC_DATA_KEY_Z, z);
 
-      Float * accelerationX = new Float(x);
-      Float * accelerationY = new Float(y);
-      Float * accelerationZ = new Float(z);
+      Float * magneticX = new Float(x);
+      Float * magneticY = new Float(y);
+      Float * magneticZ = new Float(z);
 
-      args->Add(*accelerationX);
-      args->Add(*accelerationY);
-      args->Add(*accelerationZ);
+      args->Add(*magneticX);
+      args->Add(*magneticY);
+      args->Add(*magneticZ);
     }
       break;
 
@@ -270,13 +283,14 @@ void DataForm::OnDataReceived(SensorType sensorType, SensorData &sensorData, res
 
     }
       break;
-    case SENSOR_TYPE_GPS: {
-      // Not used, but a warning is raised if this is missing
-    }
-      break;
+
+    default: break;
+
 
   }
 
+  // Send the user event to this form to be executed on the main thread.
+  // User event will be received by OnUserEventReceived()
   SendUserEvent(REQUEST_ID_UPDATE_GUI, args);
 
 }

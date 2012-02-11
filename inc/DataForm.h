@@ -44,7 +44,7 @@ private:
 	/* SensorManager */
 	Osp::Uix::SensorManager sensorManager;
 
-	/* Requests */
+	/* User event id */
 	static const int REQUEST_ID_UPDATE_GUI = 101;
 
 };
