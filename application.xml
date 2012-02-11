@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Application>
+    <Entry>Sensors</Entry>
+    <Name>
+        <English>Sensors</English>
+        <eng-GB>Sensors</eng-GB>
+    </Name>
+    <Vendor>Dr. Strangecode</Vendor>
+    <Description>Sample app showing how to retrieve data from sensors</Description>
+    <Icons>
+        <MainMenu>Icon_type4.png<Type1/>
+            <Type2>Icon_type2.png</Type2>
+            <Type3>Icon_type3.png</Type3>
+            <Type4>Icon_type4.png</Type4>
+        </MainMenu>
+        <Setting/>
+        <Ticker/>
+        <QuickPanel/>
+        <LaunchImage>Splash_type4.png<Type1/>
+            <Type2>Splash_type2.png</Type2>
+            <Type3>Splash_type3.png</Type3>
+            <Type4>Splash_type4.png</Type4>
+        </LaunchImage>
+    </Icons>
+    <AutoScaling>
+        <Enabled>true</Enabled>
+        <BaseResolution>NormalSize</BaseResolution>
+    </AutoScaling>
+</Application>
